@@ -13,7 +13,6 @@ Options:
 
 import json
 import docopt
-import copy
 
 DEFAULT_MODULE_JSON = "modules.json"
 MODULE_YEAR_COLOURS = ["snow", "slategray1", "slategray2", "slategray3"]
@@ -32,35 +31,27 @@ def load_modules(fname=None):
         parsed = json.load(jf)
 
     # Populate empty lists
-    for programme in parsed.values():
-        for year in programme:
-            for module in year:
-                for lst in ["pre", "co", "sug"]:
-                    if lst not in module:
-                        module[lst] = []
+    for module in parsed["modules"].values():
+        for lst in ["pre", "co", "sug"]:
+            if lst not in module:
+                module[lst] = []
 
-    # Get list of all defined modules
-    modules = [module["name"]
-               for programme in parsed.values()
-               for year in programme
-               for module in year]
-
-    return (parsed, modules)
+    return parsed["programmes"], parsed["modules"]
 
 
-def render_programme(programmename, programme, allmods=None):
+def render_programme(programmename, programme, modules, allmods=None):
     out = ""
 
     # Get all modules
     if allmods is None:
-        allmods = [mod["name"] for year in programme for mod in year]
+        allmods = [mod for year in programme for mod in year]
 
     # Filter lists
     for year in programme:
         for module in year:
             for lst in ["pre", "co", "sug"]:
                 new = []
-                for mod in module[lst]:
+                for mod in modules[module][lst]:
                     if type(mod) is list:
                         mod = list(filter(lambda m: m in allmods, mod))
                         if len(mod) == 1:
@@ -69,42 +60,38 @@ def render_programme(programmename, programme, allmods=None):
                             new.append(mod)
                     elif mod in allmods:
                         new.append(mod)
-                module[lst] = new
-
-    # Get module names by year
-    modules = [[mod["name"] for mod in year]
-               for year in programme]
+                modules[module][lst] = new
 
     # Emit coloured modules
-    for mods, yrnum in zip(modules, range(0, len(modules))):
-        for mod in mods:
+    for year, yrnum in zip(programme, range(0, len(programme))):
+        for module in year:
             out += "{} [style=filled, fillcolor={}, tooltip=\"{} {} {}\"]\n".format(
-                mod, MODULE_YEAR_COLOURS[yrnum], programmename, yrnum + 1, mod)
-        out += "{{rank=same {}}}\n".format(" ".join(mods))
+                module, MODULE_YEAR_COLOURS[yrnum], programmename, yrnum + 1, module)
+        out += "{{rank=same {}}}\n".format(" ".join(year))
 
     # Draw lists
     for year in programme:
         for module in year:
             for lst in ["pre", "co", "sug"]:
-                for mod in module[lst]:
+                for mod in modules[module][lst]:
                     if type(mod) is list:
                         for choice in mod:
                             out += "{} -> {} [color={}]\n".format(
-                                choice, module["name"], OPT_LIST_COLOUR[lst])
+                                choice, module, OPT_LIST_COLOUR[lst])
                     else:
                         out += "{} -> {} [color={}]\n".format(
-                            mod, module["name"], LIST_COLOUR[lst])
+                            mod, module, LIST_COLOUR[lst])
 
     return out
 
 args = docopt.docopt(__doc__)
-data, modules = load_modules(args["<modules-json>"])
+programmes, modules = load_modules(args["<modules-json>"])
 
 print("digraph Modules {")
 print("rankdir = LR")
 if args["-p"] is not None:
-    print(render_programme(args["-p"], data[args["-p"]]))
+    print(render_programme(args["-p"], programmes[args["-p"]], modules))
 else:
-    for name, programme in data.items():
-        print(render_programme(name, copy.deepcopy(programme), modules))
+    for name, programme in programmes.items():
+        print(render_programme(name, programme, modules, modules.keys()))
 print("}")
