@@ -31,6 +31,22 @@ ARROW_HEADS = {"pre": "none",
                "co": "empty",
                "sug": "none"}
 
+def trans_prereqs(modules, module_name):
+    # base case
+    if not modules[module_name]['pre']:
+        return set()
+    # recursive case
+    deps = set()
+    for pre in modules[module_name]['pre']:
+        deps = deps | trans_prereqs(modules, pre) | set([pre])
+    return deps
+
+def indirect_prereqs(modules, module_name):
+    return {x for pre in modules[module_name]['pre']
+              for x in trans_prereqs(modules, pre)}
+
+def direct_prereqs(modules, module_name):
+    return set(modules[module_name]['pre']) - indirect_prereqs(modules, module_name)
 
 def load_modules(fname=None):
     # Load json from file
@@ -122,6 +138,9 @@ else:
         allmods = None
     else:
         allmods = modules.keys()
+
+for k in modules.keys():
+    modules[k]['pre'] = list(direct_prereqs(modules, k))
 
 print("digraph Modules {")
 print("rankdir = {}".format(args["-r"]))
