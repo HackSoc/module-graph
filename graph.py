@@ -1,10 +1,22 @@
 #!/usr/bin/env python3
 
-import json
+"""graph.py render a module dependency graph
 
-def load_modules(fname=""):
+Usage:
+  graph.py [<modules-json>] [-p <programme>]
+
+Options:
+  -h --help       Show this text.
+  <modules-json>  The modules.json file to use [default: "./modules.json"].
+  -p <programme>  Only render the given programme.
+"""
+
+import json
+import docopt
+
+def load_modules(fname=None):
     # Load json from file
-    fname = "modules.json" if fname == "" else fname
+    fname = "modules.json" if fname is None else fname
     with open(fname) as jf:
         parsed = json.load(jf)
 
@@ -21,4 +33,4 @@ def load_modules(fname=""):
 
     return parsed
 
-print(load_modules())
+print(load_modules(arguments["<modules-json>"]))
