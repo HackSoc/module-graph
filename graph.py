@@ -3,12 +3,14 @@
 """graph.py render a module dependency graph
 
 Usage:
-  graph.py [<modules-json>] [-p <programme>]
+  graph.py [<modules-json>] [-p <programme>] [-r <rankdir>] [--] [<module>...]
 
 Options:
   -h --help       Show this text.
   <modules-json>  The modules.json file to use [default: "./modules.json"].
   -p <programme>  Only render the given programme.
+  -r <rankdir>    Rank direction (LR or TB) [default: LR].
+  <module>...     List of modules to render, default all in programme(s).
 """
 
 import json
@@ -50,6 +52,8 @@ def render_programme(programmename, programme, modules, allmods=None):
         allmods = [mod for year in programme for mod in year]
 
     # Filter lists
+    programme = [list(filter(lambda m: m in allmods, year))
+                 for year in programme]
     for year in programme:
         for module in year:
             for lst in ["pre", "co", "sug"]:
@@ -90,12 +94,30 @@ def render_programme(programmename, programme, modules, allmods=None):
 args = docopt.docopt(__doc__)
 programmes, modules = load_modules(args["<modules-json>"])
 
+# Calculate allowed modules
+if args["<module>"]:
+    allmods = args["<module>"]
+    changed = True
+    while changed:
+        changed = False
+        for module in allmods:
+            for lst in ["pre", "co", "sug"]:
+                for mod in modules[module][lst]:
+                    if mod not in allmods:
+                        allmods.append(mod)
+                        changed = True
+else:
+    if args["-p"] is not None:
+        allmods = None
+    else:
+        allmods = modules.keys()
+
 print("digraph Modules {")
-print("rankdir = LR")
+print("rankdir = {}".format(args["-r"]))
 print("ranksep = 1.5")
 if args["-p"] is not None:
-    print(render_programme(args["-p"], programmes[args["-p"]], modules))
+    print(render_programme(args["-p"], programmes[args["-p"]], modules, allmods))
 else:
     for name, programme in programmes.items():
-        print(render_programme(name, programme, modules, modules.keys()))
+        print(render_programme(name, programme, modules, allmods))
 print("}")
