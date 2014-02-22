@@ -48,7 +48,7 @@ def load_modules(fname=None):
     return (parsed, modules)
 
 
-def render_programme(programme, allmods=None):
+def render_programme(programmename, programme, allmods=None):
     out = ""
 
     # Get all modules
@@ -78,8 +78,8 @@ def render_programme(programme, allmods=None):
     # Emit coloured modules
     for mods, yrnum in zip(modules, range(0, len(modules))):
         for mod in mods:
-            out += "{} [style=filled, fillcolor={}]\n".format(
-                mod, MODULE_YEAR_COLOURS[yrnum])
+            out += "{} [style=filled, fillcolor={}, tooltip=\"{} {} {}\"]\n".format(
+                mod, MODULE_YEAR_COLOURS[yrnum], programmename, yrnum + 1, mod)
         out += "{{rank=same {}}}\n".format(" ".join(mods))
 
     # Draw lists
@@ -103,8 +103,8 @@ data, modules = load_modules(args["<modules-json>"])
 print("digraph Modules {")
 print("rankdir = LR")
 if args["-p"] is not None:
-    print(render_programme(data[args["-p"]]))
+    print(render_programme(args["-p"], data[args["-p"]]))
 else:
-    for programme in data.values():
-        print(render_programme(copy.deepcopy(programme), modules))
+    for name, programme in data.items():
+        print(render_programme(name, copy.deepcopy(programme), modules))
 print("}")
