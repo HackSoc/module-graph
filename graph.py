@@ -3,11 +3,14 @@
 """graph.py render a module dependency graph
 
 Usage:
-  graph.py [<modules-json>] [-p <programme>] [-r <rankdir>] [--] [<module>...]
+  graph.py [<modules-json>] [-P] [-C] [-S] [-p <programme>] [-r <rankdir>] [--] [<module>...]
 
 Options:
   -h --help       Show this text.
   <modules-json>  The modules.json file to use [default: "./modules.json"].
+  -P              Don't show prerequisites
+  -C              Don't show corequisites
+  -S              Don't show suggestions
   -p <programme>  Only render the given programme.
   -r <rankdir>    Rank direction (LR or TB) [default: LR].
   <module>...     List of modules to render, default all in programme(s).
@@ -44,7 +47,7 @@ def load_modules(fname=None):
     return parsed["programmes"], parsed["modules"]
 
 
-def render_programme(programmename, programme, modules, allmods=None):
+def render_programme(programmename, programme, modules, allmods, P, C, S):
     out = ""
 
     # Get all modules
@@ -57,6 +60,10 @@ def render_programme(programmename, programme, modules, allmods=None):
     for year in programme:
         for module in year:
             for lst in ["pre", "co", "sug"]:
+                if lst == "pre" and P: continue
+                if lst == "co" and C: continue
+                if lst == "sug" and S: continue
+
                 new = []
                 for mod in modules[module][lst]:
                     if type(mod) is list:
@@ -80,6 +87,10 @@ def render_programme(programmename, programme, modules, allmods=None):
     for year in programme:
         for module in year:
             for lst in ["pre", "co", "sug"]:
+                if lst == "pre" and P: continue
+                if lst == "co" and C: continue
+                if lst == "sug" and S: continue
+
                 for mod in modules[module][lst]:
                     if type(mod) is list:
                         for choice in mod:
@@ -116,8 +127,8 @@ print("digraph Modules {")
 print("rankdir = {}".format(args["-r"]))
 print("ranksep = 1.5")
 if args["-p"] is not None:
-    print(render_programme(args["-p"], programmes[args["-p"]], modules, allmods))
+    print(render_programme(args["-p"], programmes[args["-p"]], modules, allmods, args["-P"], args["-C"], args["-S"]))
 else:
     for name, programme in programmes.items():
-        print(render_programme(name, programme, modules, allmods))
+        print(render_programme(name, programme, modules, allmods, args["-P"], args["-C"], args["-S"]))
 print("}")
