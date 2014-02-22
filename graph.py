@@ -92,6 +92,7 @@ programmes, modules = load_modules(args["<modules-json>"])
 
 print("digraph Modules {")
 print("rankdir = LR")
+print("ranksep = 1.5")
 if args["-p"] is not None:
     print(render_programme(args["-p"], programmes[args["-p"]], modules))
 else:
