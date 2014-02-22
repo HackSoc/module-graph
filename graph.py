@@ -39,7 +39,13 @@ def load_modules(fname=None):
                     if lst not in module:
                         module[lst] = []
 
-    return parsed
+    # Get list of all defined modules
+    modules = [module["name"]
+               for programme in parsed.values()
+               for year in programme
+               for module in year]
+
+    return (parsed, modules)
 
 
 def render_programme(programme, allmods=None):
@@ -92,7 +98,7 @@ def render_programme(programme, allmods=None):
     return out
 
 args = docopt.docopt(__doc__)
-data = load_modules(args["<modules-json>"])
+data, modules = load_modules(args["<modules-json>"])
 
 print("digraph Modules {")
 print("rankdir = LR")
@@ -100,5 +106,5 @@ if args["-p"] is not None:
     print(render_programme(data[args["-p"]]))
 else:
     for programme in data.values():
-        print(render_programme(copy.deepcopy(programme)))
+        print(render_programme(copy.deepcopy(programme), modules))
 print("}")
