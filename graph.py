@@ -22,6 +22,9 @@ LIST_COLOUR = {"pre": "red3",
 OPT_LIST_COLOUR = {"pre": "pink3",
                    "co": "plum3",
                    "sug": "steelblue2"}
+ARROW_HEADS = {"pre": "none",
+               "co": "empty",
+               "sug": "none"}
 
 
 def load_modules(fname=None):
@@ -76,11 +79,11 @@ def render_programme(programmename, programme, modules, allmods=None):
                 for mod in modules[module][lst]:
                     if type(mod) is list:
                         for choice in mod:
-                            out += "{} -> {} [color={}]\n".format(
-                                choice, module, OPT_LIST_COLOUR[lst])
+                            out += "{} -> {} [color={}, arrowhead={}]\n".format(
+                                choice, module, OPT_LIST_COLOUR[lst], ARROW_HEADS[lst])
                     else:
-                        out += "{} -> {} [color={}]\n".format(
-                            mod, module, LIST_COLOUR[lst])
+                        out += "{} -> {} [color={}, arrowhead={}]\n".format(
+                            mod, module, LIST_COLOUR[lst], ARROW_HEADS[lst])
 
     return out
 
