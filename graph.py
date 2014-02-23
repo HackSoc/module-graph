@@ -97,24 +97,6 @@ def render_programme(programmename, programme, modules, allmods, P, C, S, hide_r
     # Filter lists
     years = [list(filter(lambda m: m in allmods, year))
                  for year in years]
-    for year in years:
-        for module in year:
-            for lst in ["pre", "co", "sug"]:
-                if lst == "pre" and P: continue
-                if lst == "co" and C: continue
-                if lst == "sug" and S: continue
-
-                new = []
-                for mod in modules[module][lst]:
-                    if type(mod) is list:
-                        mod = list(filter(lambda m: m in allmods, mod))
-                        if len(mod) == 1:
-                            new.append(mod[0])
-                        elif len(mod) > 1:
-                            new.append(mod)
-                    elif mod in allmods:
-                        new.append(mod)
-                modules[module][lst] = new
 
     # Emit coloured modules
     for year, yrnum in zip(years, range(0, len(years))):
@@ -136,13 +118,8 @@ def render_programme(programmename, programme, modules, allmods, P, C, S, hide_r
                 for mod in modules[module][lst]:
                     if mod in hidden:
                         continue
-                    if type(mod) is list:
-                        for choice in mod:
-                            out += "{} -> {} [color={}, arrowhead={}]\n".format(
-                                choice, module, OPT_LIST_COLOUR[lst], ARROW_HEADS[lst])
-                    else:
-                        out += "{} -> {} [color={}, arrowhead={}]\n".format(
-                            mod, module, LIST_COLOUR[lst], ARROW_HEADS[lst])
+                    out += "{} -> {} [color={}, arrowhead={}]\n".format(
+                        mod, module, LIST_COLOUR[lst], ARROW_HEADS[lst])
 
     return out
 
