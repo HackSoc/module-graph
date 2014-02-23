@@ -3,7 +3,7 @@
 """graph.py render a module dependency graph
 
 Usage:
-  graph.py [<modules-json>] [-R] [-P] [-C] [-S] [-p <programme>] [-r <rankdir>] [--] [<module>...]
+  graph.py [<modules-json>] [-P] [-C] [-S] [-R] [-O] [-p <programme>] [-r <rankdir>] [--] [<module>...]
 
 Options:
   -h --help       Show this text.
@@ -12,6 +12,7 @@ Options:
   -C              Don't show corequisites
   -S              Don't show suggestions
   -R              Don't show required modules
+  -O              Don't show orphaned modules (those which don't contribute to any relationships)
   -p <programme>  Only render the given programme.
   -r <rankdir>    Rank direction (LR or TB) [default: LR].
   <module>...     List of modules to render, default all in programme(s).
@@ -19,6 +20,7 @@ Options:
 
 import json
 import docopt
+from itertools import chain
 
 DEFAULT_MODULE_JSON = "modules.json"
 MODULE_YEAR_COLOURS = ["snow", "slategray1", "slategray2", "slategray3"]
@@ -49,6 +51,18 @@ def indirect_prereqs(modules, module_name):
 def direct_prereqs(modules, module_name):
     return set(modules[module_name]['pre']) - indirect_prereqs(modules, module_name)
 
+def orphans(modules, hidden):
+    orphans = set()
+    changed = True
+    while changed:
+        changed = False
+        for k in modules.keys():
+            if (k not in orphans) and not (modules[k]['related'] - (hidden|orphans)):
+                orphans |= set([k])
+                changed = True
+    return orphans
+
+
 def load_modules(fname=None):
     # Load json from file
     fname = DEFAULT_MODULE_JSON if fname is None else fname
@@ -64,14 +78,17 @@ def load_modules(fname=None):
     return parsed["programmes"], parsed["modules"]
 
 
-def render_programme(programmename, programme, modules, allmods, P, C, S, hide_required):
+def render_programme(programmename, programme, modules, allmods, P, C, S, hide_required, hide_orphans):
     out = ""
 
     years = programme['years']
-    required = set()
+    hidden = set(modules.keys()) - set([m for year in years for m in year])
 
     if hide_required:
-        required = set(programme['required'])
+        hidden |= set(programme['required'])
+
+    if hide_orphans:
+        hidden |= orphans(modules, hidden)
 
     # Get all modules
     if allmods is None:
@@ -102,11 +119,11 @@ def render_programme(programmename, programme, modules, allmods, P, C, S, hide_r
     # Emit coloured modules
     for year, yrnum in zip(years, range(0, len(years))):
         for module in year:
-            if module in required:
+            if module in hidden:
                 continue
             out += "{} [style=filled, fillcolor={}, tooltip=\"{} {} {}\"]\n".format(
                 module, MODULE_YEAR_COLOURS[yrnum], programmename, yrnum + 1, module)
-        out += "{{rank=same {}}}\n".format(" ".join(set(year) - required))
+        out += "{{rank=same {}}}\n".format(" ".join(set(year) - hidden))
 
     # Draw lists
     for year in years:
@@ -117,7 +134,7 @@ def render_programme(programmename, programme, modules, allmods, P, C, S, hide_r
                 if lst == "sug" and S: continue
 
                 for mod in modules[module][lst]:
-                    if mod in required:
+                    if mod in hidden:
                         continue
                     if type(mod) is list:
                         for choice in mod:
@@ -150,15 +167,26 @@ else:
     else:
         allmods = modules.keys()
 
+# remove redundant prerequisites
 for k in modules.keys():
     modules[k]['pre'] = list(direct_prereqs(modules, k))
+
+# collect forward-related modules
+for k in modules.keys():
+    modules[k]['related'] = set([m for r in ['pre', 'co', 'sug'] for m in modules[k][r]])
+
+# propagate reverse relationships
+for k in modules.keys():
+    rel = modules[k]['related']
+    for mod in rel:
+        modules[mod]['related'] |= set([k])
 
 print("digraph Modules {")
 print("rankdir = {}".format(args["-r"]))
 print("ranksep = 1.5")
 if args["-p"] is not None:
-    print(render_programme(args["-p"], programmes[args["-p"]], modules, allmods, args["-P"], args["-C"], args["-S"], args["-R"]))
+    print(render_programme(args["-p"], programmes[args["-p"]], modules, allmods, args["-P"], args["-C"], args["-S"], args["-R"], args["-O"]))
 else:
     for name, programme in programmes.items():
-        print(render_programme(name, programme, modules, allmods, args["-P"], args["-C"], args["-S"], args["-R"]))
+        print(render_programme(name, programme, modules, allmods, args["-P"], args["-C"], args["-S"], args["-R"], args["-O"]))
 print("}")

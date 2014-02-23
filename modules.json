@@ -1,6 +1,7 @@
 {
     "modules": {
         "ALAS": {"sug": ["ARIN", "MLAP", "EVCO"]},
+        "APRC": {},
         "ARIN": {"pre": ["MFCS", "TPOP"], "co": ["COCO", "POPL"]},
         "ARTS": {"pre": ["POPL", "SYAC"], "co": ["APRC"]},
         "AVIS": {"sug": ["VIGR", "CVIS", "MLAP"]},
@@ -16,6 +17,7 @@
         "ENTS": {},
         "EVCO": {},
         "EVHW": {},
+        "FMSP": {},
         "GPIG": {},
         "GRAT": {"pre": ["MFCS", "TPOP"]},
         "HACS": {},
