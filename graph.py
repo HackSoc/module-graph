@@ -37,10 +37,13 @@ EDGE_KINDS = {'pre', 'co', 'sug'}
 
 class Rel:
     def __init__(self, pairs):
-        self.pairs = set(pairs)
+        self.pairs = frozenset(pairs)
 
     def __repr__(self):
         return "Rel({})".format(self.pairs)
+
+    def override(self, pairs):
+        return Rel(self.pairs | frozenset(pairs))
 
     def image(self, s):
         return {y for x, y in self.pairs if x in s}
@@ -140,7 +143,7 @@ def load_modules(fname=None):
         for dt in {'pre', 'co', 'sug'}:
             if dt in deplist:
                 for mod in deplist[dt]:
-                    deps[dt].pairs |= {(name, mod)}
+                    deps[dt] = deps[dt].override({(name, mod)})
 
     # build programmes
     progs = {}
