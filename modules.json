@@ -55,6 +55,10 @@
                 ["ARIN", "COCO", "EMPR", "HAPR", "POPL", "SEPR", "SYAC", "VIGR"],
                 ["ARTS", "CVIS", "EMBS", "ENAR", "GRAT", "IAPT", "ICOT", "INCA", "MAIG", "MLAP", "NSTC", "PCOC"],
                 ["ALAS", "AVIS", "COPR", "CRSY", "EMER", "EVCO", "EVHW", "GPIG", "MODE", "NLPR", "PRIY", "PSEC", "QIPR", "QUCO", "SAVE", "SMAT", "SWIN", "SYAR"]
+            ],
+            "required": [
+                "DACS", "HACS", "ICAR", "MFCS", "NUMA", "SKIL", "TPOP",
+                "ARIN", "COCO", "POPL", "SYAC", "VIGR", "GPIG"
             ]
         }
     }

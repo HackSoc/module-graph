@@ -3,7 +3,7 @@
 """graph.py render a module dependency graph
 
 Usage:
-  graph.py [<modules-json>] [-P] [-C] [-S] [-p <programme>] [-r <rankdir>] [--] [<module>...]
+  graph.py [<modules-json>] [-R] [-P] [-C] [-S] [-p <programme>] [-r <rankdir>] [--] [<module>...]
 
 Options:
   -h --help       Show this text.
@@ -11,6 +11,7 @@ Options:
   -P              Don't show prerequisites
   -C              Don't show corequisites
   -S              Don't show suggestions
+  -R              Don't show required modules
   -p <programme>  Only render the given programme.
   -r <rankdir>    Rank direction (LR or TB) [default: LR].
   <module>...     List of modules to render, default all in programme(s).
@@ -63,10 +64,14 @@ def load_modules(fname=None):
     return parsed["programmes"], parsed["modules"]
 
 
-def render_programme(programmename, programme, modules, allmods, P, C, S):
+def render_programme(programmename, programme, modules, allmods, P, C, S, hide_required):
     out = ""
 
     years = programme['years']
+    required = set()
+
+    if hide_required:
+        required = set(programme['required'])
 
     # Get all modules
     if allmods is None:
@@ -97,9 +102,11 @@ def render_programme(programmename, programme, modules, allmods, P, C, S):
     # Emit coloured modules
     for year, yrnum in zip(years, range(0, len(years))):
         for module in year:
+            if module in required:
+                continue
             out += "{} [style=filled, fillcolor={}, tooltip=\"{} {} {}\"]\n".format(
                 module, MODULE_YEAR_COLOURS[yrnum], programmename, yrnum + 1, module)
-        out += "{{rank=same {}}}\n".format(" ".join(year))
+        out += "{{rank=same {}}}\n".format(" ".join(set(year) - required))
 
     # Draw lists
     for year in years:
@@ -110,6 +117,8 @@ def render_programme(programmename, programme, modules, allmods, P, C, S):
                 if lst == "sug" and S: continue
 
                 for mod in modules[module][lst]:
+                    if mod in required:
+                        continue
                     if type(mod) is list:
                         for choice in mod:
                             out += "{} -> {} [color={}, arrowhead={}]\n".format(
@@ -148,8 +157,8 @@ print("digraph Modules {")
 print("rankdir = {}".format(args["-r"]))
 print("ranksep = 1.5")
 if args["-p"] is not None:
-    print(render_programme(args["-p"], programmes[args["-p"]], modules, allmods, args["-P"], args["-C"], args["-S"]))
+    print(render_programme(args["-p"], programmes[args["-p"]], modules, allmods, args["-P"], args["-C"], args["-S"], args["-R"]))
 else:
     for name, programme in programmes.items():
-        print(render_programme(name, programme, modules, allmods, args["-P"], args["-C"], args["-S"]))
+        print(render_programme(name, programme, modules, allmods, args["-P"], args["-C"], args["-S"], args["-R"]))
 print("}")
