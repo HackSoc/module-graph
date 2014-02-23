@@ -49,11 +49,13 @@
     },
 
     "programmes": {
-        "MEng CSSE": [
-            ["DACS", "HACS", "ICAR", "MFCS", "NUMA", "SKIL", "TPOP"],
-            ["ARIN", "COCO", "EMPR", "HAPR", "POPL", "SEPR", "SYAC", "VIGR"],
-            ["ARTS", "CVIS", "EMBS", "ENAR", "GRAT", "IAPT", "ICOT", "INCA", "MAIG", "MLAP", "NSTC", "PCOC"],
-            ["ALAS", "AVIS", "COPR", "CRSY", "EMER", "EVCO", "EVHW", "GPIG", "MODE", "NLPR", "PRIY", "PSEC", "QIPR", "QUCO", "SAVE", "SMAT", "SWIN", "SYAR"]
-        ]
+        "MEng CSSE": {
+            "years": [
+                ["DACS", "HACS", "ICAR", "MFCS", "NUMA", "SKIL", "TPOP"],
+                ["ARIN", "COCO", "EMPR", "HAPR", "POPL", "SEPR", "SYAC", "VIGR"],
+                ["ARTS", "CVIS", "EMBS", "ENAR", "GRAT", "IAPT", "ICOT", "INCA", "MAIG", "MLAP", "NSTC", "PCOC"],
+                ["ALAS", "AVIS", "COPR", "CRSY", "EMER", "EVCO", "EVHW", "GPIG", "MODE", "NLPR", "PRIY", "PSEC", "QIPR", "QUCO", "SAVE", "SMAT", "SWIN", "SYAR"]
+            ]
+        }
     }
 }

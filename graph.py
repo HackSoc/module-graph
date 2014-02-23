@@ -66,14 +66,16 @@ def load_modules(fname=None):
 def render_programme(programmename, programme, modules, allmods, P, C, S):
     out = ""
 
+    years = programme['years']
+
     # Get all modules
     if allmods is None:
-        allmods = [mod for year in programme for mod in year]
+        allmods = [mod for year in years for mod in year]
 
     # Filter lists
-    programme = [list(filter(lambda m: m in allmods, year))
-                 for year in programme]
-    for year in programme:
+    years = [list(filter(lambda m: m in allmods, year))
+                 for year in years]
+    for year in years:
         for module in year:
             for lst in ["pre", "co", "sug"]:
                 if lst == "pre" and P: continue
@@ -93,14 +95,14 @@ def render_programme(programmename, programme, modules, allmods, P, C, S):
                 modules[module][lst] = new
 
     # Emit coloured modules
-    for year, yrnum in zip(programme, range(0, len(programme))):
+    for year, yrnum in zip(years, range(0, len(years))):
         for module in year:
             out += "{} [style=filled, fillcolor={}, tooltip=\"{} {} {}\"]\n".format(
                 module, MODULE_YEAR_COLOURS[yrnum], programmename, yrnum + 1, module)
         out += "{{rank=same {}}}\n".format(" ".join(year))
 
     # Draw lists
-    for year in programme:
+    for year in years:
         for module in year:
             for lst in ["pre", "co", "sug"]:
                 if lst == "pre" and P: continue
