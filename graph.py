@@ -84,6 +84,8 @@ def load_modules(fname=None):
 def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
     out = ''
 
+    deps = {k: deps[k] for k in kinds}
+
     universe = prog.all
 
     # if appropriate, remove required modules
@@ -92,12 +94,16 @@ def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
 
     # if we have a module whitelist, calculate modules that it implies
     if whitelist:
-        needed = {x for k in kinds
-                    for x in deps[k].transitive_closure.reflexive_closure.dom_restrict(whitelist).ran}
-        universe &= needed
+        universe &= {x
+                     for k in deps
+                     for x in deps[k]
+                     .transitive_closure
+                     .reflexive_closure
+                     .dom_restrict(whitelist)
+                     .ran}
 
     # restrict the dependency graph to those modules that are in the programme
-    deps = {kind: deps[kind].restrict(universe) for kind in kinds}
+    deps = {kind: deps[kind].restrict(universe) for kind in deps}
 
     # remove redundant dependencies
     if 'pre' in deps:
@@ -105,7 +111,7 @@ def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
 
     # if appropriate, remove orphan nodes
     if hide_orphans:
-        universe &= {x for k in kinds for x in deps[k].all}
+        universe &= {x for k in deps for x in deps[k].all}
 
     # module colours
     for mod in universe:
@@ -118,7 +124,7 @@ def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
         out += "{{rank=same {}}}\n".format(" ".join(year & universe))
 
     # edges
-    for kind in kinds:
+    for kind in deps:
         for x, y in deps[kind].pairs:
             out += "{} -> {} [color={}, arrowhead={}]\n".format(
                 x, y, LIST_COLOUR[kind], ARROW_HEADS[kind])
