@@ -42,20 +42,23 @@ class Rel:
     def __repr__(self):
         return "Rel({})".format(self.pairs)
 
+    @property
+    def dom(self):
+        return {x for x, y in self.pairs}
+
+    @property
+    def ran(self):
+        return {y for x, y in self.pairs}
+
+    @property
+    def all(self):
+        return self.dom | self.ran
+
     def override(self, pairs):
         return Rel(self.pairs | frozenset(pairs))
 
     def image(self, s):
         return {y for x, y in self.pairs if x in s}
-
-    def dom(self):
-        return {x for x, y in self.pairs}
-
-    def ran(self):
-        return {y for x, y in self.pairs}
-
-    def all(self):
-        return self.dom() | self.ran()
 
     def restrict(self, s):
         return Rel({(x, y) for x, y in self.pairs if x in s and y in s})
@@ -75,6 +78,7 @@ class Rel:
     def ran_antirestrict(self, s):
         return Rel({(x, y) for x, y in self.pairs if y not in s})
 
+    @property
     def transitive_closure(self):
         work = self
         old_len = len(self.pairs)
@@ -89,8 +93,9 @@ class Rel:
     def trans_closure_step(self):
         return {(x, z) for x, y1 in self.pairs for y2, z in self.pairs if y1 == y2}
 
+    @property
     def reflexive_closure(self):
-        return Rel(self.pairs | {(x, x) for x in self.all()})
+        return Rel(self.pairs | {(x, x) for x in self.all})
 
     def transitively_redundant_pairs(self):
         # transitively redundant pairs are those whose removal does
@@ -99,10 +104,10 @@ class Rel:
         # there is almost certainly a more efficient algorithm for
         # this, but as the relations involved are small, we simply
         # express the above property in code
-        orig_len = len(self.transitive_closure().pairs)
+        orig_len = len(self.transitive_closure.pairs)
         redundant = set()
         for p in self.pairs:
-            if len(Rel(self.pairs - {p}).transitive_closure().pairs) == orig_len:
+            if len(Rel(self.pairs - {p}).transitive_closure.pairs) == orig_len:
                 redundant |= {p}
         return redundant
 
@@ -123,6 +128,7 @@ class Programme:
     def __repr__(self):
         return "Programme({}, {}, {})".format(self.name, self.years, self.required)
 
+    @property
     def all(self):
         return {x for y in self.years for x in y}
 
@@ -157,7 +163,7 @@ def load_modules(fname=None):
 def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
     out = ''
 
-    universe = prog.all()
+    universe = prog.all
 
     # if appropriate, remove required modules
     if hide_required:
@@ -166,18 +172,19 @@ def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
     # if we have a module whitelist, calculate modules that it implies
     if whitelist:
         needed = {x for k in kinds
-                    for x in deps[k].transitive_closure().reflexive_closure().dom_restrict(whitelist).ran()}
+                    for x in deps[k].transitive_closure.reflexive_closure.dom_restrict(whitelist).ran}
         universe &= needed
 
     # restrict the dependency graph to those modules that are in the programme
     deps = {kind: deps[kind].restrict(universe) for kind in kinds}
 
     # remove redundant dependencies
-    deps['pre'] = deps['pre'].transitively_minimal()
+    if 'pre' in deps:
+        deps['pre'] = deps['pre'].transitively_minimal()
 
     # if appropriate, remove orphan nodes
     if hide_orphans:
-        universe &= {x for k in kinds for x in deps[k].all()}
+        universe &= {x for k in kinds for x in deps[k].all}
 
     # module colours
     for mod in universe:
