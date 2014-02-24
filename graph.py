@@ -67,7 +67,7 @@ def load_modules(fname=None):
     deps = {dt : Rel(set()) for dt in EDGE_KINDS}
 
     for name, deplist in parsed['modules'].items():
-        for dt in {'pre', 'co', 'sug'}:
+        for dt in EDGE_KINDS:
             if dt in deplist:
                 for mod in deplist[dt]:
                     deps[dt] = deps[dt].override({(name, mod)})
