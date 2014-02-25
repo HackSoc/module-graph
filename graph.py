@@ -73,7 +73,7 @@ def load_modules(fname=None):
         for dt in EDGE_KINDS:
             if dt in deplist:
                 for mod in deplist[dt]:
-                    deps[dt] = deps[dt].override({(name, mod)})
+                    deps[dt] = deps[dt].union({(name, mod)})
 
     # build programmes
     progs = {}

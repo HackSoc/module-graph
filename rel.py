@@ -18,7 +18,7 @@ class Rel:
     def all(self):
         return self.dom | self.ran
 
-    def override(self, pairs):
+    def union(self, pairs):
         return Rel(self.pairs | frozenset(pairs))
 
     def image(self, s):
