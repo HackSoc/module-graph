@@ -20,6 +20,7 @@ Options:
 
 import json
 import docopt
+from itertools import zip_longest
 from rel import Rel
 
 DEFAULT_MODULE_JSON = "modules.json"
@@ -44,10 +45,21 @@ class Programme:
         self.name = name
         self.years = [frozenset(y) for y in years]
         self.required = frozenset(required)
+
+        self.build_yearmap()
+
+    def build_yearmap(self):
         self.yearmap = {}
-        for year, num in zip(years, range(len(years))):
+        for year, num in zip(self.years, range(len(self.years))):
             for mod in year:
                 self.yearmap[mod] = num
+
+    def include(self, others):
+        for p in others:
+            self.years = [y1 | y2 for (y1, y2) in zip_longest(self.years, p.years, fillvalue=set())]
+            self.required = self.required | p.required
+
+        self.build_yearmap()
 
     def __repr__(self):
         return "Programme({}, {}, {})".format(self.name, self.years, self.required)
@@ -80,6 +92,12 @@ def load_modules(fname=None):
 
     for name, details in parsed['programmes'].items():
         progs[name] = Programme(name, details['years'], details['required'])
+
+    # we need to resolve includes in a separate pass because the order
+    # in which modules appear in the constructed dict is not defined
+    for name, details in parsed['programmes'].items():
+        if 'include' in details:
+                progs[name].include({progs[p] for p in details['include']})
 
     return deps, progs
 
