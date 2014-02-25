@@ -3,7 +3,7 @@
 """graph.py render a module dependency graph
 
 Usage:
-  graph.py [<modules-json>] [-P] [-C] [-S] [-R] [-O] [-p <programme>] [-r <rankdir>] [--] [<module>...]
+  graph.py [<modules-json>] [-P] [-C] [-S] [-E] [-R] [-O] [-p <programme>] [-r <rankdir>] [--] [<module>...]
 
 Options:
   -h --help       Show this text.
@@ -11,6 +11,7 @@ Options:
   -P              Don't show prerequisites
   -C              Don't show corequisites
   -S              Don't show suggestions
+  -E              Don't show mutual exclusions
   -R              Don't show required modules
   -O              Don't show orphaned modules (those which don't contribute to any relationships)
   -p <programme>  Only render the given programme.
@@ -171,6 +172,8 @@ if args['-C']:
     kinds -= {'co'}
 if args['-S']:
     kinds -= {'sug'}
+if args['-E']:
+    kinds -= {'excl'}
 
 whitelist = None
 if args['<module>']:
