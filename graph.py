@@ -3,7 +3,7 @@
 """graph.py render a module dependency graph
 
 Usage:
-  graph.py [<modules-json>] [-P] [-C] [-S] [-E] [-R] [-O] [-p <programme>] [-r <rankdir>] [--] [<module>...]
+  graph.py [<modules-json>] [-P] [-C] [-S] [-E] [-R] [-O] [-p <programme>] [-r <rankdir>] [-b <blacklist>]... [--] [<module>...]
 
 Options:
   -h --help       Show this text.
@@ -16,6 +16,7 @@ Options:
   -O              Don't show orphaned modules (those which don't contribute to any relationships)
   -p <programme>  Only render the given programme.
   -r <rankdir>    Rank direction (RL or BT) [default: RL].
+  -b <blacklist>  Blacklist certain modules to avoid rendering them.
   <module>...     List of modules to render, default all in programme(s).
 """
 
@@ -107,7 +108,7 @@ def load_modules(fname=None):
     return deps, progs
 
 
-def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
+def render_prog(prog, deps, kinds, whitelist, blacklist, hide_required, hide_orphans):
     out = ''
 
     deps = {k: deps[k] for k in kinds}
@@ -127,6 +128,10 @@ def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
                      .reflexive_closure
                      .dom_restrict(whitelist)
                      .ran}
+
+    # if we have a module blacklist, remove those modules
+    if blacklist:
+        universe -= blacklist
 
     # restrict the dependency graph to those modules that are in the programme
     deps = {kind: deps[kind].restrict(universe) for kind in deps}
@@ -177,16 +182,20 @@ if args['-E']:
 
 whitelist = None
 if args['<module>']:
-    whitelist = set(args['<module>'])
+    whitelist = frozenset(args['<module>'])
+
+blacklist = None
+if args['-b']:
+    blacklist = frozenset([m for l in args['-b'] for m in l.split(',')])
 
 print("digraph Modules {")
 print("rankdir = {}".format(args["-r"]))
 print("ranksep = 1.5")
 
 if args['-p'] is not None:
-    print(render_prog(progs[args['-p']], deps, kinds, whitelist, args['-R'], args['-O']))
+    print(render_prog(progs[args['-p']], deps, kinds, whitelist, blacklist, args['-R'], args['-O']))
 else:
     for prog in progs.values():
-        print(render_prog(prog, deps, kinds, whitelist, args['-R'], args['-O']))
+        print(render_prog(prog, deps, kinds, whitelist, blacklist, args['-R'], args['-O']))
 
 print("}")
