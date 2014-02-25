@@ -30,9 +30,12 @@ LIST_COLOUR = {"pre": "red3",
 OPT_LIST_COLOUR = {"pre": "pink3",
                    "co": "plum3",
                    "sug": "steelblue2"}
-ARROW_HEADS = {"pre": "none",
+ARROW_HEADS = {"pre": "open",
                "co": "empty",
-               "sug": "none"}
+               "sug": "halfopen"}
+EDGE_STYLES = {'pre': 'solid',
+               'co': 'bold',
+               'sug': 'dashed'}
 EDGE_KINDS = {'pre', 'co', 'sug'}
 
 class Programme:
@@ -126,8 +129,8 @@ def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
     # edges
     for kind in deps:
         for x, y in deps[kind].pairs:
-            out += "{} -> {} [color={}, arrowhead={}]\n".format(
-                x, y, LIST_COLOUR[kind], ARROW_HEADS[kind])
+            out += "{} -> {} [color={}, arrowhead={}, style={}]\n".format(
+                x, y, LIST_COLOUR[kind], ARROW_HEADS[kind], EDGE_STYLES[kind])
 
     return out
 
