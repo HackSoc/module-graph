@@ -27,17 +27,21 @@ DEFAULT_MODULE_JSON = "modules.json"
 MODULE_YEAR_COLOURS = ["snow", "slategray1", "slategray2", "slategray3"]
 LIST_COLOUR = {"pre": "red3",
                "co": "purple3",
-               "sug": "steelblue"}
+               "sug": "steelblue",
+               "excl": "red"}
 OPT_LIST_COLOUR = {"pre": "pink3",
                    "co": "plum3",
-                   "sug": "steelblue2"}
+                   "sug": "steelblue2",
+                   "excl": "red"}
 ARROW_HEADS = {"pre": "open",
                "co": "empty",
-               "sug": "halfopen"}
+               "sug": "halfopen",
+               "excl": "none"}
 EDGE_STYLES = {'pre': 'solid',
-               'co': 'bold',
-               'sug': 'dashed'}
-EDGE_KINDS = {'pre', 'co', 'sug'}
+               'co': 'solid',
+               'sug': 'dashed',
+               'excl': 'bold'}
+EDGE_KINDS = {'pre', 'co', 'sug', 'excl'}
 
 class Programme:
 
@@ -130,6 +134,10 @@ def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
     if 'pre' in deps:
         deps['pre'] = deps['pre'].transitively_minimal()
 
+    # avoid duplicating mutual exclusions
+    if 'excl' in deps:
+        deps['excl'] = deps['excl'].find_antisymmetry()
+
     # if appropriate, remove orphan nodes
     if hide_orphans:
         universe &= {x for k in deps for x in deps[k].all}
@@ -156,7 +164,7 @@ def render_prog(prog, deps, kinds, whitelist, hide_required, hide_orphans):
 args = docopt.docopt(__doc__)
 deps, progs = load_modules(args["<modules-json>"])
 
-kinds = EDGE_KINDS
+kinds = set(EDGE_KINDS)
 if args['-P']:
     kinds -= {'pre'}
 if args['-C']:

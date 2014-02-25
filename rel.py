@@ -61,6 +61,10 @@ class Rel:
     def reflexive_closure(self):
         return Rel(self.pairs | {(x, x) for x in self.all})
 
+    @property
+    def symmetric_closure(self):
+        return Rel(self.pairs | {(y, x) for (x, y) in self.pairs})
+
     def transitively_redundant_pairs(self):
         # transitively redundant pairs are those whose removal does
         # not change the size of the transitive closure.
@@ -77,3 +81,11 @@ class Rel:
 
     def transitively_minimal(self):
         return Rel(self.pairs - self.transitively_redundant_pairs())
+
+    def find_antisymmetry(self):
+        work = self
+        for x in self.dom:
+            for y in self.ran:
+                if (x, y) in work.pairs:
+                    work = Rel(work.pairs - {(y, x)})
+        return work
