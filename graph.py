@@ -22,8 +22,8 @@ Options:
 
 import json
 import docopt
-from itertools import zip_longest
 from rel import Rel
+from programme import Programme
 
 DEFAULT_MODULE_JSON = "modules.json"
 MODULE_YEAR_COLOURS = ["snow", "slategray1", "slategray2", "slategray3"]
@@ -45,39 +45,6 @@ EDGE_STYLES = {'pre': 'solid',
                'excl': 'bold'}
 EDGE_KINDS = {'pre', 'co', 'sug', 'excl'}
 
-class Programme:
-
-    def __init__(self, name, years, required):
-        self.name = name
-        self.years = [frozenset(y) for y in years]
-        self.required = frozenset(required)
-
-        self.build_yearmap()
-
-    def build_yearmap(self):
-        self.yearmap = {}
-        for year, num in zip(self.years, range(len(self.years))):
-            for mod in year:
-                self.yearmap[mod] = num
-
-    def include(self, others):
-        for p in others:
-            self.years = [y1 | y2 for (y1, y2) in zip_longest(self.years, p.years, fillvalue=set())]
-            self.required = self.required | p.required
-
-        self.build_yearmap()
-
-    def __repr__(self):
-        return "Programme({}, {}, {})".format(self.name, self.years, self.required)
-
-    @property
-    def all(self):
-        return {x for y in self.years for x in y}
-
-    def yearof(self, module):
-        return self.yearmap[module]
-
-
 def load_modules(fname=None):
     # Load json from file
     fname = DEFAULT_MODULE_JSON if fname is None else fname
@@ -97,23 +64,25 @@ def load_modules(fname=None):
     progs = {}
 
     for name, details in parsed['programmes'].items():
-        progs[name] = Programme(name, details['years'], details['required'])
+        progs[name] = Programme(details['years'], details['required'])
 
     # we need to resolve includes in a separate pass because the order
     # in which modules appear in the constructed dict is not defined
     for name, details in parsed['programmes'].items():
         if 'include' in details:
-                progs[name].include({progs[p] for p in details['include']})
+                progs[name] = progs[name].union({progs[p] for p in details['include']})
 
     return deps, progs
 
 
-def render_prog(prog, deps, kinds, whitelist, blacklist, hide_required, hide_orphans):
+def render_prog(name, prog, deps, kinds, whitelist, blacklist, hide_required, hide_orphans):
     out = ''
 
     deps = {k: deps[k] for k in kinds}
 
     universe = prog.all
+
+    print(prog.required)
 
     # if appropriate, remove required modules
     if hide_required:
@@ -152,7 +121,7 @@ def render_prog(prog, deps, kinds, whitelist, blacklist, hide_required, hide_orp
     for mod in universe:
         ynum = prog.yearof(mod)
         out += "{} [style=filled, fillcolor={}, tooltip=\"{} {} {}\"]\n".format(
-            mod, MODULE_YEAR_COLOURS[ynum], prog.name, ynum+1, mod)
+            mod, MODULE_YEAR_COLOURS[ynum], name, ynum+1, mod)
 
     # module ranks
     for year in prog.years:
@@ -193,9 +162,10 @@ print("rankdir = {}".format(args["-r"]))
 print("ranksep = 1.5")
 
 if args['-p'] is not None:
-    print(render_prog(progs[args['-p']], deps, kinds, whitelist, blacklist, args['-R'], args['-O']))
+    print(render_prog(args['-p'], progs[args['-p']], deps, kinds, whitelist, blacklist, args['-R'], args['-O']))
 else:
-    for prog in progs.values():
-        print(render_prog(prog, deps, kinds, whitelist, blacklist, args['-R'], args['-O']))
+    print(render_prog(' | '.join(progs.keys()),
+                      Programme({},{}).choice(progs.values()),
+                      deps, kinds, whitelist, blacklist, args['-R'], args['-O']))
 
 print("}")
